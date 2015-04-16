@@ -69,7 +69,7 @@ function jwt_link_perm() {
 function jwt_link_menu() {
   $items = array();
   $items['admin/build/jwtlink'] = array(
-    'title'            => "JWT Link settings",
+    'title'            => "JWT Link",
     'description'      => "Various field for generating JWT Encoded URL.",
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('jwt_link_admin'),
@@ -144,12 +144,7 @@ return system_settings_form($form);
  * @param null $link_url
  * @return string
  */
-function jwt_link_url($iss, $sub, $aud, $key = NULL, $link_url = NULL) {
-  //DEFAULTING IF NOT PASSED
-  $link_url = is_null($link_url) ? $aud : $link_url;
-  $key = is_null($key) ? "key" : $key;
-
-
+function jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url) {
   //(4) REQUIRED::EXPIRATION
   //(5) OPTIONAL::ISSUED AT
   //(6) OPTIONAL::NOT BEFORE
@@ -166,7 +161,7 @@ function jwt_link_url($iss, $sub, $aud, $key = NULL, $link_url = NULL) {
   );
 
   //JWT CAN BE DECODED TO FOR DEBUG/SANITY LOOK AT CLASS
-  $jwt = JWT::encode($token, $key); //COULD PASS 3rd & 4th PARAMS of ALGORITHM & KEYID
+  $jwt = JWT::encode($token, $key, $alg); //COULD PASS 4th PARAM of KEYID
 
   return "{$link_url}?jwt={$jwt}";
 }
