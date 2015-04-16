@@ -7,36 +7,6 @@
 //CHECK THE README FOR INFORMATION ABOUT THIS REQUIRE LINE
 require_once 'JWT/Authentication/JWT.php';
 
-global $user;
-$anon = "anon";
-
-
-//(1) REQUIRED::ISSUER
-$iss = variable_get('jwt_link_iss', '');
-
-
-//(2) REQUIRED::SUBJECT
-//IF ITS AN OBJ IT LOADED FROM DREW PAUL :: ANON IF NOT OBJ OR NAME IS NULL
-$sub = is_object($user) ? (is_null($user->name) ? $anon : $user->name) : $anon;
-
-//(3) REQUIRED::AUDIENCE / AUTHORIZATION SERVER
-$aud = variable_get('jwt_link_aud', '');
-
-
-//WHERE TO GO, NOT REQUIRED IN FN
-$link_url = variable_get('jwt_link_url', '');
-
-
-//KEY, NOT REQUIRED IN FN
-$key = variable_get('jwt_link_key', '');
-
-//ALG, NOT REQUIRED IN FN
-$alg = variable_get('jwt_link_alg', '');
-
-if (!($sub == $anon)) {
-  print jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url);
-}
-
 
 /*#####################################################
 * Implementation of hook_help
@@ -103,6 +73,14 @@ function jwt_link_admin() {
     '#description'   => "Site URL authorizing the generated token the token. Remote server e.g. http://siteauthorizingthis.com",
   );
 
+  $form['jwt_link_text'] = array(
+    '#type'          => 'textfield',
+    '#title'         => "Link Text",
+    '#default_value' => variable_get('jwt_link_text', 'Visit Site...'),
+    '#size'          => 100,
+    '#description'   => "A nice message for the link rather that outputting the long URL.",
+  );
+
   $form['jwt_link_url'] = array(
     '#type'          => 'textfield',
     '#title'         => "URL / Link To",
@@ -132,7 +110,7 @@ function jwt_link_admin() {
   );
 
 
-return system_settings_form($form);
+  return system_settings_form($form);
 }
 
 
@@ -165,3 +143,66 @@ function jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url) {
   return "{$link_url}?jwt={$jwt}";
 }
 
+/*#####################################################
+* Implementation of hook_block
+* ####################################################
+*/
+function jwt_link_block($op = 'list', $delta = 0, $edit = array()) {
+  // set up an empty array which will contain the block contents
+  $block = array();
+
+  switch ($op) {
+    case "list":
+      // Generate listing of blocks from this module, for the admin/block page
+      $block[0]["info"] = t('JWT URL Link');
+      break;
+
+    case "view":
+      $block_content = "ANON CANNOT ACCESS";
+      //GETTING DATA
+
+      global $user;
+      $anon = "anon";
+
+
+      //(1) REQUIRED::ISSUER
+      $iss = variable_get('jwt_link_iss', '');
+
+
+      //(2) REQUIRED::SUBJECT
+      //IF ITS AN OBJ IT LOADED FROM DREW PAUL :: ANON IF NOT OBJ OR NAME IS NULL
+      $sub = is_object($user) ? (is_null($user->name) ? $anon : $user->name) : $anon;
+
+      //(3) REQUIRED::AUDIENCE / AUTHORIZATION SERVER
+      $aud = variable_get('jwt_link_aud', '');
+
+
+      //WHERE TO GO, NOT REQUIRED IN FN
+      $link_url = variable_get('jwt_link_url', '');
+      $link_text = variable_get('jwt_link_text', 'Visit Site...');
+
+
+      //KEY, NOT REQUIRED IN FN
+      $key = variable_get('jwt_link_key', '');
+
+      //ALG, NOT REQUIRED IN FN
+      $alg = variable_get('jwt_link_alg', 'HS256');
+
+      if (!($sub == $anon)) {
+        $jwt_url = @jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url);
+        $block_content = l($link_text, $jwt_url);
+      }
+      //END GETTING DATA
+
+      $block['content'] = $block_content;
+      break;
+
+    case "save":
+      break;
+
+    case "configure":
+      break;
+  }
+
+  return $block;
+}
