@@ -34,7 +34,7 @@ $key = variable_get('jwt_link_key', '');
 $alg = variable_get('jwt_link_alg', '');
 
 if (!($sub == $anon)) {
-  print jwt_link_url($iss, $sub, $aud, $link_url);
+  print jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url);
 }
 
 
@@ -123,10 +123,9 @@ function jwt_link_admin() {
     '#title'         => t("Encryption Algorithm"),
     '#type'          => 'select',
     '#options'       => array(
-      'HS256',
-      'HS512',
-      'HS384',
-      'RS256',
+      'HS256' => 'HS256',
+      'HS512' => 'HS512',
+      'HS384' => 'HS384',
     ),
     '#default_value' => variable_get('jwt_link_alg', 'HS256'),
     '#description'   => "Which algorithm for encryption. Default HS256.",
