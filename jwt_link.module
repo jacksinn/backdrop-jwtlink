@@ -89,6 +89,14 @@ function jwt_link_admin() {
     '#description'   => "Site URL to link to. It will likely be the same domain of the Audience / Authorization server e.g. http://siteauthorizingthis.com/some/path",
   );
 
+  $form['jwt_link_arg'] = array(
+    '#type'          => 'textfield',
+    '#title'         => "URL Token Argument",
+    '#default_value' => variable_get('jwt_link_arg', 'token'),
+    '#size'          => 100,
+    '#description'   => "Token variable name for URL. Typically 'jwt' or 'token'.",
+  );
+
   $form['jwt_link_key'] = array(
     '#type'          => 'textfield',
     '#title'         => "Key",
@@ -121,7 +129,7 @@ function jwt_link_admin() {
  * @param null $link_url
  * @return string
  */
-function jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url) {
+function jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url, $link_arg) {
   //(4) REQUIRED::EXPIRATION
   //(5) OPTIONAL::ISSUED AT
   //(6) OPTIONAL::NOT BEFORE
@@ -140,7 +148,7 @@ function jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url) {
   //JWT CAN BE DECODED TO FOR DEBUG/SANITY LOOK AT CLASS
   $jwt = JWT::encode($token, $key, $alg); //COULD PASS 4th PARAM of KEYID
 
-  return "{$link_url}?jwt={$jwt}";
+  return "{$link_url}?{$link_arg}={$jwt}";
 }
 
 /*#####################################################
@@ -180,6 +188,7 @@ function jwt_link_block($op = 'list', $delta = 0, $edit = array()) {
       //WHERE TO GO, NOT REQUIRED IN FN
       $link_url = variable_get('jwt_link_url', '');
       $link_text = variable_get('jwt_link_text', 'Visit Site...');
+      $link_arg = variable_get('jwt_link_arg', 'token');
 
 
       //KEY, NOT REQUIRED IN FN
@@ -189,7 +198,7 @@ function jwt_link_block($op = 'list', $delta = 0, $edit = array()) {
       $alg = variable_get('jwt_link_alg', 'HS256');
 
       if (!($sub == $anon)) {
-        $jwt_url = @jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url);
+        $jwt_url = @jwt_link_url($iss, $sub, $aud, $alg, $key, $link_url, $link_arg);
         $block_content = l($link_text, $jwt_url);
       }
       //END GETTING DATA
